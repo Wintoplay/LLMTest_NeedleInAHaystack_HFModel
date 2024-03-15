@@ -4,24 +4,28 @@ from typing import Optional
 from dotenv import load_dotenv
 from jsonargparse import CLI
 
-from . import LLMNeedleHaystackTester, LLMMultiNeedleHaystackTester
-from .evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
-from .providers import Anthropic, ModelProvider, OpenAI
+from evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
+from llm_multi_needle_haystack_tester import LLMMultiNeedleHaystackTester
+from llm_needle_haystack_tester import LLMNeedleHaystackTester
+from providers import Anthropic, HFer, ModelProvider, OpenAI
 
 load_dotenv()
 
+
 @dataclass
 class CommandArgs():
-    provider: str = "openai"
+    provider: str = "hf"
     evaluator: str = "openai"
-    model_name: str = "gpt-3.5-turbo-0125"
+    model_name: str = "tnl3"
+    repo_or_path: str = "/cpfs01/user/shenxuyang/LLM/15B-1393B"
     evaluator_model_name: Optional[str] = "gpt-3.5-turbo-0125"
-    needle: Optional[str] = "\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n"
+    needle: Optional[
+        str] = "\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n"
     haystack_dir: Optional[str] = "PaulGrahamEssays"
     retrieval_question: Optional[str] = "What is the best thing to do in San Francisco?"
     results_version: Optional[int] = 1
     context_lengths_min: Optional[int] = 1000
-    context_lengths_max: Optional[int] = 16000
+    context_lengths_max: Optional[int] = 10000
     context_lengths_num_intervals: Optional[int] = 35
     context_lengths: Optional[list[int]] = None
     document_depth_percent_min: Optional[int] = 0
@@ -40,10 +44,11 @@ class CommandArgs():
     # Multi-needle parameters
     multi_needle: Optional[bool] = False
     needles: list[str] = field(default_factory=lambda: [
-        " Figs are one of the secret ingredients needed to build the perfect pizza. ", 
-        " Prosciutto is one of the secret ingredients needed to build the perfect pizza. ", 
+        " Figs are one of the secret ingredients needed to build the perfect pizza. ",
+        " Prosciutto is one of the secret ingredients needed to build the perfect pizza. ",
         " Goat cheese is one of the secret ingredients needed to build the perfect pizza. "
     ])
+
 
 def get_model_to_test(args: CommandArgs) -> ModelProvider:
     """
@@ -63,8 +68,11 @@ def get_model_to_test(args: CommandArgs) -> ModelProvider:
             return OpenAI(model_name=args.model_name)
         case "anthropic":
             return Anthropic(model_name=args.model_name)
+        case "hf":
+            return HFer(model_name=args.model_name, repo_or_path=args.repo_or_path)
         case _:
             raise ValueError(f"Invalid provider: {args.provider}")
+
 
 def get_evaluator(args: CommandArgs) -> Evaluator:
     """
@@ -89,6 +97,7 @@ def get_evaluator(args: CommandArgs) -> Evaluator:
         case _:
             raise ValueError(f"Invalid evaluator: {args.evaluator}")
 
+
 def main():
     """
     The main function to execute the testing process based on command line arguments.
@@ -99,14 +108,15 @@ def main():
     args = CLI(CommandArgs, as_positional=False)
     args.model_to_test = get_model_to_test(args)
     args.evaluator = get_evaluator(args)
-    
+
     if args.multi_needle == True:
         print("Testing multi-needle")
         tester = LLMMultiNeedleHaystackTester(**args.__dict__)
-    else: 
+    else:
         print("Testing single-needle")
         tester = LLMNeedleHaystackTester(**args.__dict__)
     tester.start_test()
+
 
 if __name__ == "__main__":
     main()
