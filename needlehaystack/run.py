@@ -2,9 +2,8 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from dotenv import load_dotenv
-from jsonargparse import CLI
-
 from evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
+from jsonargparse import CLI
 from llm_multi_needle_haystack_tester import LLMMultiNeedleHaystackTester
 from llm_needle_haystack_tester import LLMNeedleHaystackTester
 from providers import Anthropic, HFer, ModelProvider, OpenAI
@@ -17,8 +16,9 @@ class CommandArgs():
     provider: str = "hf"
     evaluator: str = "openai"
     model_name: str = "tnl3"
-    repo_or_path: str = "/cpfs01/user/shenxuyang/LLM/15B-1393B"
-    evaluator_model_name: Optional[str] = "gpt-3.5-turbo-0125"
+    repo_or_path: str = ""
+    model_tag: str = ""
+    evaluator_model_name: Optional[str] = "gpt-3.5-turbo"
     needle: Optional[
         str] = "\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n"
     haystack_dir: Optional[str] = "PaulGrahamEssays"
@@ -106,6 +106,12 @@ def main():
     and initiates the testing process either for single-needle or multi-needle scenarios.
     """
     args = CLI(CommandArgs, as_positional=False)
+    print("=============================")
+    print("Provider:  ", args.provider)
+    print("Model Name:", args.model_name)
+    print("Model Repo:", args.repo_or_path)
+    print("=============================")
+
     args.model_to_test = get_model_to_test(args)
     args.evaluator = get_evaluator(args)
 

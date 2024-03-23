@@ -6,9 +6,8 @@ import json
 import os
 import time
 
-import numpy as np
-
 from evaluators import Evaluator
+import numpy as np
 from providers import ModelProvider
 
 
@@ -40,6 +39,7 @@ class LLMNeedleHaystackTester:
                  final_context_length_buffer=200,
                  seconds_to_sleep_between_completions=None,
                  print_ongoing_status=True,
+                 model_tag=None,
                  **kwargs):
         """
         :model_to_test: The model to test. Default is None.
@@ -82,6 +82,7 @@ class LLMNeedleHaystackTester:
         self.seconds_to_sleep_between_completions = seconds_to_sleep_between_completions
         self.print_ongoing_status = print_ongoing_status
         self.testing_results = []
+        self.model_tag = str(model_tag)
 
         if context_lengths is None:
             if context_lengths_min is None or context_lengths_max is None or context_lengths_num_intervals is None:
@@ -140,6 +141,14 @@ class LLMNeedleHaystackTester:
     def sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
 
+    def pattern_match(self, sec):
+        sec = sec.strip().lower()
+
+        if 'eat a sandwich' in sec and 'sit in dolores park' in sec:
+            return True, 10
+        else:
+            return False, None
+
     async def bound_evaluate_and_log(self, sem, *args):
         async with sem:
             await self.evaluate_and_log(*args)
@@ -179,7 +188,15 @@ class LLMNeedleHaystackTester:
         test_elapsed_time = test_end_time - test_start_time
 
         # Compare the reponse to the actual needle you placed
-        score = self.evaluation_model.evaluate_response(response)
+        if len(response.strip()) == 0:
+            # scoring empty response to 1
+            score = 1
+        else:
+            matched, s = self.pattern_match(response)
+            if matched:
+                score = s
+            else:
+                score = self.evaluation_model.evaluate_response(response)
 
         results = {
             # 'context' : context, # Uncomment this line if you'd like to save the context the model was asked to retrieve from. Warning: This will become very large.
@@ -210,20 +227,24 @@ class LLMNeedleHaystackTester:
             results['file_name'] = context_file_location
 
             # Save the context to file for retesting
-            if not os.path.exists('contexts'):
-                os.makedirs('contexts')
+            os.makedirs('contexts', exist_ok=True)
+            os.makedirs(f'contexts/{self.model_name}-{self.model_tag}', exist_ok=True)
 
-            with open(f'contexts/{context_file_location}_context.txt', 'w') as f:
+            with open(f'contexts/{self.model_name}-{self.model_tag}/{context_file_location}_context.txt',
+                      'w',
+                      encoding='utf-8') as f:
                 f.write(context)
 
         if self.save_results:
             # Save the context to file for retesting
-            if not os.path.exists('results'):
-                os.makedirs('results')
+            os.makedirs('results', exist_ok=True)
+            os.makedirs(f'results/{self.model_name}-{self.model_tag}', exist_ok=True)
 
             # Save the result to file for retesting
-            with open(f'results/{context_file_location}_results.json', 'w') as f:
-                json.dump(results, f)
+            with open(f'results/{self.model_name}-{self.model_tag}/{context_file_location}_results.json',
+                      'w',
+                      encoding='utf-8') as f:
+                json.dump(results, f, indent=4, ensure_ascii=False)
 
         if self.seconds_to_sleep_between_completions:
             await asyncio.sleep(self.seconds_to_sleep_between_completions)
@@ -319,7 +340,7 @@ class LLMNeedleHaystackTester:
 
         while self.get_context_length_in_tokens(context) < max_context_length:
             for file in glob.glob(os.path.join(base_dir, self.haystack_dir, "*.txt")):
-                with open(file, 'r') as f:
+                with open(file, 'r', encoding='utf-8') as f:
                     context += f.read()
         return context
 
