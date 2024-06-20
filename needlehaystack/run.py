@@ -2,11 +2,11 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from dotenv import load_dotenv
-from evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
+from .evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
 from jsonargparse import CLI
-from llm_multi_needle_haystack_tester import LLMMultiNeedleHaystackTester
-from llm_needle_haystack_tester import LLMNeedleHaystackTester
-from providers import Anthropic, HFer, ModelProvider, OpenAI
+from .llm_multi_needle_haystack_tester import LLMMultiNeedleHaystackTester
+from .llm_needle_haystack_tester import LLMNeedleHaystackTester
+from .providers import Anthropic, HFer, ModelProvider, OpenAI
 
 load_dotenv()
 

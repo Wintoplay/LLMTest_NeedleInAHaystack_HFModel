@@ -6,9 +6,9 @@ import json
 import os
 import time
 
-from evaluators import Evaluator
+from .evaluators import Evaluator
 import numpy as np
-from providers import ModelProvider
+from .providers import ModelProvider
 
 
 class LLMNeedleHaystackTester:
