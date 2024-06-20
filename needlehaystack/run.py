@@ -6,7 +6,7 @@ from .evaluators import Evaluator, LangSmithEvaluator, OpenAIEvaluator
 from jsonargparse import CLI
 from .llm_multi_needle_haystack_tester import LLMMultiNeedleHaystackTester
 from .llm_needle_haystack_tester import LLMNeedleHaystackTester
-from .providers import Anthropic, HFer, ModelProvider, OpenAI
+from .providers import HFer, ModelProvider, OpenAI
 
 load_dotenv()
 
