@@ -4,6 +4,7 @@ from .evaluator import Evaluator
 
 from langchain.evaluation import load_evaluator
 from langchain_community.chat_models import ChatOpenAI
+from langchain_groq import ChatGroq
 
 class OpenAIEvaluator(Evaluator):
     DEFAULT_MODEL_KWARGS: dict = dict(temperature=0)
@@ -35,15 +36,22 @@ class OpenAIEvaluator(Evaluator):
         self.true_answer = true_answer
         self.question_asked = question_asked
 
-        api_key = os.getenv('NIAH_EVALUATOR_API_KEY')
-        if (not api_key):
-            raise ValueError("NIAH_EVALUATOR_API_KEY must be in env for using openai evaluator.")
+        # api_key = os.getenv('NIAH_EVALUATOR_API_KEY')
+        # if (not api_key):
+        #     raise ValueError("NIAH_EVALUATOR_API_KEY must be in env for using openai evaluator.")
 
         self.api_key = api_key
         
-        self.evaluator = ChatOpenAI(model=self.model_name,
-                                    openai_api_key=self.api_key,
-                                    **self.model_kwargs)
+        # self.evaluator = ChatOpenAI(model=self.model_name,
+        #                             openai_api_key=self.api_key,
+        #                             **self.model_kwargs)
+
+        self.evaluator = ChatGroq(
+            temperature=0,
+            model="llama3-70b-8192",
+            temperature=0,
+            # api_key="" # Optional if not set as an environment variable
+        )
 
     def evaluate_response(self, response: str) -> int:
         evaluator = load_evaluator(
