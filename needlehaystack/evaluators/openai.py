@@ -49,7 +49,6 @@ class OpenAIEvaluator(Evaluator):
         self.evaluator = ChatGroq(
             temperature=0,
             model="llama3-70b-8192",
-            temperature=0,
             # api_key="" # Optional if not set as an environment variable
         )
 
